@@ -21,12 +21,16 @@ public class FileService {
         List<Product> products = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(FilePath.productFilePath))) {
-            String line;
             reader.readLine();
-            while ((line = reader.readLine()) != null) {
+            reader.lines().forEach(line -> {
                 String[] values = line.split(REGEX);
-                products.add(createProduct(values, promotions));
-            }
+                Product product = createProduct(values, promotions);
+                products.add(product);
+
+                if (product.getPromotion() != null && !hasNonPromotionProduct(products, product.getName())) {
+                    products.add(new Product(product.getName(), product.getPrice(), 0));
+                }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -34,16 +38,19 @@ public class FileService {
         return products;
     }
 
+    private static boolean hasNonPromotionProduct(List<Product> products, String name) {
+        return products.stream().anyMatch(product -> product.getName().equals(name) && product.getPromotion() == null);
+    }
+
     private static Map<String, Promotion> loadPromotions() {
         Map<String, Promotion> promotions = new HashMap<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(FilePath.promotionFilePath))) {
-            String line;
-            reader.readLine();
-            while ((line = reader.readLine()) != null) {
+            reader.readLine(); // 헤더 스킵
+            reader.lines().forEach(line -> {
                 String[] values = line.split(REGEX);
                 promotions.put(values[0], createPromotion(values));
-            }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -55,22 +62,25 @@ public class FileService {
         String name = values[0];
         int price = Parser.convertStringToInteger(values[1]);
         int quantity = Parser.convertStringToInteger(values[2]);
-
-        if (values[3].equals(NULL)) {
-            return new Product(name, price, quantity);
+        String promotionName = null;
+        if (!values[3].equals(NULL)) {
+            promotionName = values[3];
         }
-        String promotion = values[3];
+        Promotion promotion = null;
+        if (promotionName != null) {
+            promotion = promotions.get(promotionName);
+        }
 
-        return new Product(name, price, quantity, promotions.get(promotion));
+        return new Product(name, price, quantity, promotion);
     }
 
     private static Promotion createPromotion(String[] values) {
         String name = values[0];
         int buy = Parser.convertStringToInteger(values[1]);
         int get = Parser.convertStringToInteger(values[2]);
-        LocalDateTime start_date = Parser.convertStringToLocalDate(values[3]);
-        LocalDateTime end_date = Parser.convertStringToLocalDate(values[4]);
+        LocalDateTime startDate = Parser.convertStringToLocalDate(values[3]);
+        LocalDateTime endDate = Parser.convertStringToLocalDate(values[4]);
 
-        return new Promotion(name, buy, get, start_date, end_date);
+        return new Promotion(name, buy, get, startDate, endDate);
     }
 }

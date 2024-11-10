@@ -44,10 +44,12 @@ public class PromotionService {
         int promoQuantity = calculatePromotionalQuantity(promoProduct.getQuantity(), promoProduct.getPromotion());
         int freeQuantity = calculateFreeItems(promoProduct.getQuantity(), promoProduct.getPromotion());
 
-        if (confirmNoPromoPurchase(order, totalQuantity, promoQuantity)) {
+        if (!confirmNoPromoPurchase(order, totalQuantity, promoQuantity)) {
+            order.decreaseQuantity(totalQuantity - promoQuantity);
             return createPurchasedProduct(order, promoProduct.getPrice() * order.getQuantity(),
-                    getDiscount(totalQuantity, promoProduct), freeQuantity, 0);
+                    getDiscount(order.getQuantity(), promoProduct), freeQuantity, 0);
         }
+
 
         return applyMixedPurchase(order, promoProduct, noPromoProduct, totalQuantity, promoQuantity, freeQuantity);
     }
@@ -63,11 +65,11 @@ public class PromotionService {
     }
 
     private int processFreeQuantity(Order order, Product promoProduct) {
-        int freeQuantity = calculateFreeItems(order.getQuantity(), promoProduct.getPromotion());
         if (hasFreeQuantityAvailable(order.getQuantity(), promoProduct.getPromotion()) && InputView.askForAdditionalFreeItem(order.getName())) {
             order.increaseQuantity();
         }
-        return freeQuantity;
+
+        return calculateFreeItems(order.getQuantity(), promoProduct.getPromotion());
     }
 
     private PurchasedProduct createPurchasedProduct(Order order, int promoAmount, int discountAmount,

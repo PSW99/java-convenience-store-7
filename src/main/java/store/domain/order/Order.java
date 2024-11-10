@@ -20,4 +20,8 @@ public class Order{
     public void increaseQuantity() {
         quantity++;
     }
+
+    public void decreaseQuantity(int decreaseQuantity) {
+        quantity -= decreaseQuantity;
+    }
 }

@@ -40,8 +40,6 @@ public class ConvenienceStoreController {
         if (InputView.confirmAdditionalPurchase()) {
             startShopping();
         }
-
-//        FileService.modifyProductQuantity(products);
     }
 
     private List<PurchasedProduct> getPurchasedProducts(PromotionProducts promotionProducts, NoPromotionProducts noPromotionProducts) {

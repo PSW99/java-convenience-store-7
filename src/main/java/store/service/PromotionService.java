@@ -125,7 +125,7 @@ public class PromotionService {
 
         int promoBundles = quantity / (buy + get);
 
-        return quantity - promoBundles * (buy + get) == buy;
+        return quantity - promoBundles * (buy + get) == buy && quantity < promoProduct.getQuantity();
     }
 
     private boolean isPromotionAvailable(Product promoProduct) {

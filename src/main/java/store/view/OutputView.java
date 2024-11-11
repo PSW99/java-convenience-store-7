@@ -31,12 +31,12 @@ public class OutputView {
 
     private static void printReceiptHeader() {
         System.out.println("==============W 편의점================");
-        System.out.printf("%-10s %-10s %-10s\n", "상품명", "수량", "금액");
+        System.out.printf("%-10s %-10s %10s\n", "상품명", "수량", "금액");
     }
 
     private static void printPurchasedItems(List<PurchasedProduct> purchasedProducts) {
         for (PurchasedProduct product : purchasedProducts) {
-            System.out.printf("%-10s %-10d %-10s\n",
+            System.out.printf("%-10s %10d %10s\n",
                     product.getName(),
                     product.getQuantity(),
                     formatCurrency(product.getPromoAmount() + product.getNoPromoAmount())
@@ -45,24 +45,23 @@ public class OutputView {
     }
 
     private static void printGivenItems(List<PurchasedProduct> purchasedProducts) {
-        System.out.println("=============증      정===============");
+        System.out.println("===============증   정===============");
         for (PurchasedProduct product : purchasedProducts) {
             if (product.getGivenQuantity() > 0) {
-                System.out.printf("%-10s %-10d\n", product.getName(), product.getGivenQuantity());
+                System.out.printf("%-10s %10d\n", product.getName(), product.getGivenQuantity());
             }
         }
     }
 
     private static void printTotals(Receipt receipt) {
         System.out.println("====================================");
-        System.out.printf("%-10s %-10s %-10s\n", "총구매액", formatCurrency(receipt.getTotalQuantity()), formatCurrency(receipt.getTotalAmount()));
-        System.out.printf("%-10s\t\t\t%-10s\n", "행사할인", "-" + formatCurrency(receipt.getDiscountAmount()));
-        System.out.printf("%-10s\t\t\t %-10s\n", "멤버십할인", "-" + formatCurrency(receipt.getMembershipDiscount()));
-        System.out.printf("%-10s\t\t\t %-10s\n", "내실돈", formatCurrency(receipt.getFinalAmount()));
+        System.out.printf("%-10s %10s %10s\n", "총구매액", formatCurrency(receipt.getTotalQuantity()), formatCurrency(receipt.getTotalAmount()));
+        System.out.printf("%-11s %20s\n", "행사할인", "-" + formatCurrency(receipt.getDiscountAmount()));
+        System.out.printf("%-10s %20s\n", "멤버십할인", "-" + formatCurrency(receipt.getMembershipDiscount()));
+        System.out.printf("%-11s %20s\n", "내실돈", formatCurrency(receipt.getFinalAmount()));
     }
 
     private static String formatCurrency(int amount) {
         return String.format("%,d", amount);
     }
-
 }

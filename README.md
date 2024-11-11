@@ -13,41 +13,6 @@
 
 
 ## 📦 패키지 구조
-src/
-├── controller/
-│   └── ConvenienceStoreController
-├── domain/
-│   ├── order/
-│   │   ├── Order
-│   │   └── Orders
-│   ├── product/
-│   │   ├── MemberShip
-│   │   ├── NoPromotionProducts
-│   │   ├── Product
-│   │   ├── Promotion
-│   │   └── PromotionProducts
-│   ├── purchasedProduct/
-│   │   └── PurchasedProduct
-│   └── receipt/
-│       └── Receipt
-├── service/
-│   ├── FileService
-│   ├── PaymentService
-│   ├── ProductService
-│   └── PromotionService
-├── util/
-│   ├── ErrorMessage
-│   ├── FilePath
-│   ├── InputValidator
-│   ├── Parser
-│   ├── PaymentValidator
-│   └── YesNoOption
-└── view/
-├── InputView
-├── OutputView
-└── Application
-
-### 구조 설명
 
 - controller: ConvenienceStoreController 클래스가 있으며, 애플리케이션의 주요 흐름을 제어합니다. 사용자의 입력과 전체 쇼핑 흐름을 관리합니다.
 

@@ -26,9 +26,7 @@ public class PromotionService {
     }
 
     private PurchasedProduct calculateWithPromotion(Order order, Product promoProduct, Product noPromoProduct) {
-        int totalQuantity = order.getQuantity();
-
-        if (promoProduct.getQuantity() > totalQuantity) {
+        if (promoProduct.getQuantity() >= order.getQuantity()) {
             return applyFullPromotion(order, promoProduct);
         }
 
@@ -36,42 +34,52 @@ public class PromotionService {
     }
 
     private PurchasedProduct applyFullPromotion(Order order, Product promoProduct) {
-        promoProduct.decreaseQuantity(order.getQuantity());
         int freeQuantity = processFreeQuantity(order, promoProduct);
+        int promoQuantity = calculatePromotionalQuantity(order.getQuantity(), promoProduct.getPromotion());
+
+        if (order.getQuantity() != promoQuantity) {
+            promoProduct.decreaseQuantity(order.getQuantity());
+
+            return createPurchasedProduct(order, promoProduct.getPrice() * promoQuantity,
+                    getDiscount(freeQuantity, promoProduct.getPrice()), freeQuantity, Math.abs(((order.getQuantity()) - promoQuantity) * promoProduct.getPrice()));
+        }
+
+        promoProduct.decreaseQuantity(order.getQuantity());
         return createPurchasedProduct(order, promoProduct.getPrice() * order.getQuantity(),
-                getDiscount(order.getQuantity(), promoProduct), freeQuantity, 0);
+                getDiscount(freeQuantity, promoProduct.getPrice()), freeQuantity, 0);
     }
 
     private PurchasedProduct applyPartialPromotion(Order order, Product promoProduct, Product noPromoProduct) {
-        int totalQuantity = order.getQuantity();
-        int promoQuantity = calculatePromotionalQuantity(promoProduct.getQuantity(), promoProduct.getPromotion());
         int freeQuantity = calculateFreeItems(promoProduct.getQuantity(), promoProduct.getPromotion());
+        int promoQuantity = calculatePromotionalQuantity(promoProduct.getQuantity(), promoProduct.getPromotion());
 
-        if (!confirmNoPromoPurchase(order, totalQuantity, promoQuantity)) {
-            order.decreaseQuantity(totalQuantity - promoQuantity);
-            return createPurchasedProduct(order, promoProduct.getPrice() * order.getQuantity(),
-                    getDiscount(order.getQuantity(), promoProduct), freeQuantity, 0);
+        if (!confirmNoPromoPurchase(order, order.getQuantity(), promoQuantity)) {
+            order.decreaseQuantity(order.getQuantity() - promoQuantity);
+
+            return createPurchasedProduct(order, promoProduct.getPrice() * promoQuantity,
+                    getDiscount(freeQuantity, promoProduct.getPrice()), freeQuantity, 0);
         }
 
-
-        return applyMixedPurchase(order, promoProduct, noPromoProduct, totalQuantity, promoQuantity, freeQuantity);
+        return applyMixedPurchase(order, promoProduct, noPromoProduct, promoQuantity, freeQuantity);
     }
 
     private PurchasedProduct applyMixedPurchase(Order order, Product promoProduct, Product noPromoProduct,
-                                                int totalQuantity, int promoQuantity, int freeQuantity) {
+                                                int promoQuantity, int freeQuantity) {
         int promoAmount = promoQuantity * promoProduct.getPrice();
-        int noPromoAmount = (totalQuantity - promoQuantity) * noPromoProduct.getPrice();
-        promoProduct.decreaseQuantity(promoProduct.getQuantity());
-        noPromoProduct.decreaseQuantity(totalQuantity - promoQuantity);
+        int noPromoAmount = (order.getQuantity() - promoQuantity) * noPromoProduct.getPrice();
 
-        return createPurchasedProduct(order, promoAmount, getDiscount(totalQuantity, promoProduct), freeQuantity, noPromoAmount);
+        noPromoProduct.decreaseQuantity(order.getQuantity() - promoProduct.getQuantity());
+        promoProduct.decreaseQuantity(promoProduct.getQuantity());
+
+        return createPurchasedProduct(order, promoAmount, getDiscount(freeQuantity, promoProduct.getPrice()), freeQuantity, noPromoAmount);
     }
 
     private int processFreeQuantity(Order order, Product promoProduct) {
-        if (hasFreeQuantityAvailable(order.getQuantity(), promoProduct.getPromotion()) && InputView.askForAdditionalFreeItem(order.getName())) {
-            order.increaseQuantity();
+        if (hasFreeQuantityAvailable(order.getQuantity(), promoProduct)) {
+            if (InputView.askForAdditionalFreeItem(order.getName())) {
+                order.increaseQuantity();
+            }
         }
-
         return calculateFreeItems(order.getQuantity(), promoProduct.getPromotion());
     }
 
@@ -85,8 +93,8 @@ public class PromotionService {
                 .build();
     }
 
-    private boolean confirmNoPromoPurchase(Order order, int totalQuantity, int promoQuantity) {
-        return totalQuantity - promoQuantity > 0 && InputView.askForNonPromotionalPurchase(order.getName(), totalQuantity - promoQuantity);
+    private boolean confirmNoPromoPurchase(Order order, int orderQuantity, int promoQuantity) {
+        return orderQuantity - promoQuantity > 0 && InputView.askForNonPromotionalPurchase(order.getName(), orderQuantity - promoQuantity);
     }
 
     private int payRegularPrice(Order order, Product promoProduct, Product noPromoProduct) {
@@ -103,17 +111,21 @@ public class PromotionService {
         return totalQuantity * promoProduct.getPrice();
     }
 
-    private int getDiscount(int quantity, Product promoProduct) {
-        Promotion promotion = promoProduct.getPromotion();
-        if (promotion == null || !promotion.isAvailable(today)) {
-            return 0;
-        }
-
-        return (quantity / (promotion.getBuy() + promotion.getGet())) * promotion.getGet() * promoProduct.getPrice();
+    private int getDiscount(int quantity, int price) {
+        return quantity * price;
     }
 
-    private boolean hasFreeQuantityAvailable(int quantity, Promotion promotion) {
-        return quantity >= promotion.getBuy() && quantity != calculatePromotionalQuantity(quantity, promotion);
+    private boolean hasFreeQuantityAvailable(int quantity, Product promoProduct) {
+        int buy = promoProduct.getPromotion().getBuy();
+        int get = promoProduct.getPromotion().getGet();
+
+        if (quantity < buy) {
+            return false;
+        }
+
+        int promoBundles = quantity / (buy + get);
+
+        return quantity - promoBundles * (buy + get) == buy;
     }
 
     private boolean isPromotionAvailable(Product promoProduct) {
@@ -127,6 +139,10 @@ public class PromotionService {
     }
 
     private int calculatePromotionalQuantity(int quantity, Promotion promotion) {
+        if (quantity == promotion.getBuy()) {
+            return quantity - 1;
+        }
+
         return (quantity / (promotion.getBuy() + promotion.getGet())) * (promotion.getBuy() + promotion.getGet());
     }
 }

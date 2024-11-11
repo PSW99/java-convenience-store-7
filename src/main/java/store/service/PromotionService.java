@@ -37,8 +37,8 @@ public class PromotionService {
         int freeQuantity = processFreeQuantity(order, promoProduct);
         int promoQuantity = calculatePromotionalQuantity(order.getQuantity(), promoProduct.getPromotion());
 
-        if (order.getQuantity() != promoQuantity) {
-            promoProduct.decreaseQuantity(order.getQuantity());
+        if (confirmNoPromoPurchase(order, order.getQuantity(), promoQuantity)) {
+            promoProduct.decreaseQuantity(order.getQuantity() - promoQuantity);
 
             return createPurchasedProduct(order, promoProduct.getPrice() * promoQuantity,
                     getDiscount(freeQuantity, promoProduct.getPrice()), freeQuantity, Math.abs(((order.getQuantity()) - promoQuantity) * promoProduct.getPrice()));
@@ -94,7 +94,7 @@ public class PromotionService {
     }
 
     private boolean confirmNoPromoPurchase(Order order, int orderQuantity, int promoQuantity) {
-        return orderQuantity - promoQuantity > 0 && InputView.askForNonPromotionalPurchase(order.getName(), orderQuantity - promoQuantity);
+        return orderQuantity != promoQuantity && InputView.askForNonPromotionalPurchase(order.getName(), orderQuantity - promoQuantity);
     }
 
     private int payRegularPrice(Order order, Product promoProduct, Product noPromoProduct) {

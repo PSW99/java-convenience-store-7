@@ -44,6 +44,7 @@ public class PromotionService {
                     getDiscount(freeQuantity, promoProduct.getPrice()), freeQuantity, Math.abs(((order.getQuantity()) - promoQuantity) * promoProduct.getPrice()));
         }
 
+        order.decreaseQuantity(order.getQuantity() - promoQuantity);
         promoProduct.decreaseQuantity(order.getQuantity());
         return createPurchasedProduct(order, promoProduct.getPrice() * order.getQuantity(),
                 getDiscount(freeQuantity, promoProduct.getPrice()), freeQuantity, 0);

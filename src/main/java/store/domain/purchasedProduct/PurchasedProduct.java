@@ -49,7 +49,7 @@ public class PurchasedProduct {
         private int discountAmount;
         private int givenQuantity;
 
-        public Builder(String name, int quantity) { // 필수 필드인 name을 받는 생성자
+        public Builder(String name, int quantity) {
             this.name = name;
             this.quantity = quantity;
         }

@@ -27,9 +27,12 @@ public class PromotionService {
 
     private PurchasedProduct calculateWithPromotion(Order order, Product promoProduct, Product noPromoProduct) {
         int totalQuantity = order.getQuantity();
-        return (promoProduct.getQuantity() > totalQuantity) ?
-                applyFullPromotion(order, promoProduct) :
-                applyPartialPromotion(order, promoProduct, noPromoProduct);
+
+        if (promoProduct.getQuantity() > totalQuantity) {
+            return applyFullPromotion(order, promoProduct);
+        }
+
+        return applyPartialPromotion(order, promoProduct, noPromoProduct);
     }
 
     private PurchasedProduct applyFullPromotion(Order order, Product promoProduct) {

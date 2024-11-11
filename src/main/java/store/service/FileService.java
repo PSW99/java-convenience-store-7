@@ -7,10 +7,7 @@ import store.util.Parser;
 
 import java.io.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class FileService {
     private static final String REGEX = ",";
@@ -22,20 +19,36 @@ public class FileService {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(FilePath.productFilePath))) {
             reader.readLine();
-            reader.lines().forEach(line -> {
-                String[] values = line.split(REGEX);
-                Product product = createProduct(values, promotions);
-                products.add(product);
-
-                if (product.getPromotion() != null && !hasNonPromotionProduct(products, product.getName())) {
-                    products.add(new Product(product.getName(), product.getPrice(), 0));
-                }
-            });
+            reader.lines().forEach(line -> processLine(line, promotions, products));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return products;
+    }
+
+    private static void processLine(String line, Map<String, Promotion> promotions, List<Product> products) {
+        Product currentProduct = getProduct(line, promotions);
+        if (!products.isEmpty()) {
+            Product lastProduct = products.getLast();
+            if (shouldRemoveLastProduct(lastProduct, currentProduct)) {
+                products.removeLast();
+            }
+        }
+
+        products.add(currentProduct);
+        if (currentProduct.getPromotion() != null && !hasNonPromotionProduct(products, currentProduct.getName())) {
+            products.add(new Product(currentProduct.getName(), currentProduct.getPrice(), 0));
+        }
+    }
+
+    private static boolean shouldRemoveLastProduct(Product lastProduct, Product currentProduct) {
+        return lastProduct.getQuantity() == 0 && Objects.equals(lastProduct.getName(), currentProduct.getName());
+    }
+
+    private static Product getProduct(String line, Map<String, Promotion> promotions) {
+        String[] values = line.split(REGEX);
+        return createProduct(values, promotions);
     }
 
     private static boolean hasNonPromotionProduct(List<Product> products, String name) {
